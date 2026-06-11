@@ -5,7 +5,7 @@ import sys
 
 # Function to open the application
 def open_application():
-    app_path = r"C:\Users\Abdul Moiz Nouman\Desktop\autopynet_dashboard\main.py"
+    app_path = r"C:\Users\Arham\Desktop\autopynet_dashboard\main.py"
     python_executable = sys.executable  # Get the path of the Python interpreter
     subprocess.Popen([python_executable, app_path])  # Run the script with Python
     time.sleep(5)  # Wait for the application to load

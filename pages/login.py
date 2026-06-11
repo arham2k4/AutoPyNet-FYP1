@@ -112,9 +112,14 @@ class LoginDialog(QDialog):
         # Check credentials (admin/admin)
         if username == "admin" and password == "admin":
             self.login_successful()
+        elif username == "admin":
+            self.show_error("Wrong password. Please enter the correct password.")
+            self.password_input.clear()
+            self.password_input.setFocus()
         else:
             self.show_error("Invalid username or password")
             self.password_input.clear()
+            self.password_input.setFocus()
     
     def show_error(self, message):
         """Display error message"""
