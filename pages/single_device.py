@@ -76,12 +76,12 @@ class SingleDevicePage(QFrame):
         self.ip_input.setFont(QFont("Arial", 12))
         self.ip_input.setStyleSheet("""
             QLineEdit {
-                # border: 2px solid #dcdcdc;
-                # border-radius: 8px;
+                border: 2px solid #dcdcdc;
+                border-radius: 8px;
                 padding: 0 10px;
             }
             QLineEdit:focus {
-                # border-color: #4CAF50;
+                border-color: #4CAF50;
             }
         """)
 

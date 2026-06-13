@@ -1,5 +1,5 @@
 # pages/device_status_page.py
-from PyQt5.QtWidgets import (QFrame, QVBoxLayout, QTableWidget, 
+from PyQt5.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QTableWidget, 
                             QTableWidgetItem, QLabel, QSpacerItem, QSizePolicy)
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
