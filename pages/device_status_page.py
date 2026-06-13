@@ -28,6 +28,29 @@ class DeviceStatusPage(QFrame):
         """)
         layout.addWidget(title)
 
+        # Status summary (online / offline counts)
+        self.summary_frame = QFrame()
+        self.summary_frame.setStyleSheet("""
+            QFrame { background-color: transparent; }
+            QLabel { font-size: 14pt; }
+        """)
+        summary_layout = QHBoxLayout(self.summary_frame)
+        summary_layout.setContentsMargins(0, 0, 0, 0)
+        summary_layout.setSpacing(20)
+
+        self.online_label = QLabel("Online: 0")
+        self.online_label.setFont(QFont("Arial", 12, QFont.Bold))
+        self.online_label.setStyleSheet("color: green;")
+
+        self.offline_label = QLabel("Offline: 0")
+        self.offline_label.setFont(QFont("Arial", 12, QFont.Bold))
+        self.offline_label.setStyleSheet("color: red;")
+
+        summary_layout.addWidget(self.online_label)
+        summary_layout.addWidget(self.offline_label)
+        summary_layout.addStretch()
+        layout.addWidget(self.summary_frame)
+
         # Add vertical spacer for consistent top margin
         layout.addSpacerItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed))
 
@@ -73,12 +96,13 @@ class DeviceStatusPage(QFrame):
         self.device_table.setColumnWidth(2, 150)  # Type
         
         # Add sample data with consistent row height
-        self.update_device_table([
+        sample_devices = [
             {"name": "Core-Switch-01", "ip": "192.168.1.1", "type": "Switch", "status": "Online"},
             {"name": "Router-01", "ip": "192.168.1.2", "type": "Router", "status": "Online"},
             {"name": "Access-Switch-01", "ip": "192.168.1.3", "type": "Switch", "status": "Offline"},
             {"name": "Firewall-01", "ip": "192.168.1.4", "type": "Firewall", "status": "Online"},
-        ])
+        ]
+        self.update_device_table(sample_devices)
         
         layout.addWidget(self.device_table)
 
@@ -88,6 +112,11 @@ class DeviceStatusPage(QFrame):
     def update_device_table(self, devices):
         """Update the table with device data"""
         self.device_table.setRowCount(len(devices))
+        # Update summary counts
+        online_count = sum(1 for d in devices if d.get("status") == "Online")
+        offline_count = len(devices) - online_count
+        self.online_label.setText(f"Online: {online_count}")
+        self.offline_label.setText(f"Offline: {offline_count}")
         
         for row, device in enumerate(devices):
             # Set consistent row height
