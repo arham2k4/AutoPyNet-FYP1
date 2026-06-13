@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QPushButton, QLabel
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPixmap
+import os
 
 class Sidebar(QFrame):
     def __init__(self, parent):
@@ -20,17 +21,24 @@ class Sidebar(QFrame):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Logo
-        logo = QLabel("AUTOPYNET")
+        # Logo (try to load workspace image, fall back to text)
+        logo = QLabel()
         logo.setFont(QFont("Arial", 16, QFont.Bold))
         logo.setAlignment(Qt.AlignCenter)
-        logo.setStyleSheet("""
-            QLabel {
-                color: #343a40;
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
-        """)
+        logo_path = os.path.join(r"C:\Users\Arham\Desktop\autopynet_dashboard 4th Milestone", "logoicon.png")
+        pix = QPixmap(logo_path)
+        if not pix.isNull():
+            pix = pix.scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo.setPixmap(pix)
+        else:
+            logo.setText("AUTOPYNET")
+            logo.setStyleSheet("""
+                QLabel {
+                    color: #343a40;
+                    margin-top: 20px;
+                    margin-bottom: 20px;
+                }
+            """)
         layout.addWidget(logo)
 
         # Divider
@@ -46,7 +54,8 @@ class Sidebar(QFrame):
             ("Vendor", self.parent.open_choose_vendor_page),
             ("My Files", self.parent.open_my_files_page),
             # ("Status", self.parent.open_status_page),
-            ("Logs", self.parent.open_log_window)  # New Logs button
+            ("Logs", self.parent.open_log_window),  # New Logs button
+            ("Sign Out", getattr(self.parent, "sign_out", lambda: None))
         ]
 
         for text, callback in buttons:

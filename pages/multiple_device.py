@@ -241,23 +241,28 @@ class MultipleDevicePage(QFrame):
 
             if hasattr(script_module, "main"):
                 script_module.main()
+                self.parent.log_message(f"Command executed: {button.code_id} - {button.description}")
             else:
-                print(f"Script {script_name} does not define a 'main' function.")
+                msg = f"Script {script_name} does not define a 'main' function."
+                print(msg)
+                self.parent.log_message(msg)
                 self.show_error_message(f"Script {script_name} is invalid!")
 
-        except ModuleNotFoundError:
-            print(f"Script not found: {script_name}")
-            self.show_error_message(f"Script not found: {script_name}")
+        except ModuleNotFoundError as e:
+            msg = f"Module not found: {e}"
+            print(msg)
+            self.parent.log_message(msg)
+            self.show_error_message(f"Required module missing: {e}")
         except Exception as e:
-            print(f"Error running script {script_name}: {e}")
+            msg = f"Error running script {script_name}: {e}"
+            print(msg)
             traceback.print_exc()
+            self.parent.log_message(msg)
             self.show_error_message(f"Error running script: {str(e)}")
 
-        # Clear file input and path after navigating to main page
+        # Clear file input and path after running the command
         self.file_path_display.clear()
         self.selected_file_path = None
-
-        self.parent.open_main_page()
 
     def set_selected_options(self, vendor, device_type):
         self.current_vendor = vendor

@@ -1,7 +1,8 @@
 # AutoPynetDashboard.py
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFrame,
                              QStackedWidget, QLabel, QPushButton)
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon, QPixmap
+import os
 from PyQt5.QtCore import Qt, QSize
 from widgets.sidebar import Sidebar
 from widgets.search_bar import SearchBar
@@ -62,6 +63,21 @@ class AutoPynetDashboard(QWidget):
         main_layout.addWidget(self.pages)
         self.setLayout(main_layout)
 
+    def sign_out(self):
+        """Sign out: close dashboard and return to login dialog."""
+        try:
+            from pages.login import LoginDialog
+            # Close current window and open login dialog modally
+            self.close()
+            login = LoginDialog()
+            login.exec_()
+        except Exception:
+            # Fallback: just close the window
+            try:
+                self.close()
+            except Exception:
+                pass
+
     # Add this new method to handle log window toggling
     def open_log_window(self):
         """Toggle visibility of the log window."""
@@ -69,6 +85,11 @@ class AutoPynetDashboard(QWidget):
             self.log_window.hide()
         else:
             self.log_window.show()
+
+    def log_message(self, message: str):
+        """Send a message to the shared log window."""
+        if self.log_window:
+            self.log_window.log_emitter.new_log.emit(message)
 
     # Navigation methods (keep all existing ones)
     def open_main_page(self):
@@ -123,10 +144,21 @@ class AutoPynetDashboard(QWidget):
         search_bar = SearchBar()
         content_layout.addWidget(search_bar)
 
-        # 2. Welcome to AutoPyNet heading
+        # 2. Welcome to AutoPyNet heading (with logo)
         heading_frame = QFrame()
-        heading_layout = QVBoxLayout(heading_frame)
+        heading_hlayout = QHBoxLayout(heading_frame)
 
+        # Logo at left
+        logo_label = QLabel()
+        logo_path = os.path.join(r"C:\Users\Arham\Desktop\autopynet_dashboard 4th Milestone", "logoicon.png")
+        pix = QPixmap(logo_path)
+        if not pix.isNull():
+            pix = pix.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(pix)
+        else:
+            logo_label.setText("")
+
+        text_vlayout = QVBoxLayout()
         welcome_label = QLabel("Welcome to")
         welcome_label.setFont(QFont("Arial", 25, QFont.Bold))
         welcome_label.setAlignment(Qt.AlignLeft)
@@ -149,8 +181,12 @@ class AutoPynetDashboard(QWidget):
             }
         """)
 
-        heading_layout.addWidget(welcome_label)
-        heading_layout.addWidget(autopynet_label)
+        text_vlayout.addWidget(welcome_label)
+        text_vlayout.addWidget(autopynet_label)
+
+        heading_hlayout.addWidget(logo_label)
+        heading_hlayout.addLayout(text_vlayout)
+        heading_hlayout.addStretch()
         content_layout.addWidget(heading_frame)
 
         # 3. Wrapper section with the rest of the content

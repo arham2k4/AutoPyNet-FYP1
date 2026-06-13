@@ -31,6 +31,21 @@ class LogWindow(QWidget):
     
     def append_log(self, message):
         self.log_display.append(message.strip())
+        # Limit log size to avoid UI lag
+        doc = self.log_display.document()
+        max_blocks = 2000
+        if doc.blockCount() > max_blocks:
+            # remove oldest blocks
+            cursor = self.log_display.textCursor()
+            cursor.movePosition(cursor.Start)
+            cursor.select(cursor.LineUnderCursor)
+            # delete a chunk of lines
+            for _ in range(200):
+                cursor.movePosition(cursor.Start)
+                cursor.select(cursor.LineUnderCursor)
+                cursor.removeSelectedText()
+                cursor.deleteChar()
+
         # Auto-scroll to bottom
         cursor = self.log_display.textCursor()
         cursor.movePosition(cursor.End)

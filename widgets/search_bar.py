@@ -33,7 +33,6 @@ class SearchBar(QFrame):
                 border-radius: 15px;
                 background-color: #ffffff;
                 color: #333;
-                # text-align: left;  # This ensures text alignment within the input
             }
             QLineEdit:focus {
                 border: 1px solid #007bff;

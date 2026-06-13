@@ -293,26 +293,43 @@ class SingleDevicePage(QFrame):
         vendor = self.current_vendor
         device_type = self.current_device_type
         
-        print("\n--- Selection Path ---")
-        print(f"IP Address: {ip_address}")
-        print(f"Vendor: {self.current_vendor}")
-        print(f"Device Type: {self.current_device_type}")
-        print(f"Configuration: {self.parent.selected_configuration}")
-        print(f"Selected Code: {button.code_id} - {button.description}")
-        print("----------------------\n")
+        log_text = (
+            "\n--- Selection Path ---\n"
+            f"IP Address: {ip_address}\n"
+            f"Vendor: {self.current_vendor}\n"
+            f"Device Type: {self.current_device_type}\n"
+            f"Configuration: {self.parent.selected_configuration}\n"
+            f"Selected Code: {button.code_id} - {button.description}\n"
+            "----------------------\n"
+        )
+        print(log_text)
+        self.parent.log_message(log_text)
 
         try:
             folder = f"{device_type.lower()}_single_device"
             module_path = f"Command.{vendor}.{device_type}.{folder}.{button.description}"
-            print(f"Trying to import: {module_path}")
+            log_import = f"Trying to import: {module_path}"
+            print(log_import)
+            self.parent.log_message(log_import)
             script_module = importlib.import_module(module_path)
 
             if hasattr(script_module, "main"):
                 script_module.main()
+                success_msg = f"Command executed: {button.code_id} - {button.description}"
+                print(success_msg)
+                self.parent.log_message(success_msg)
             else:
-                print(f"'main' not found in {module_path}")
+                error_msg = f"'main' not found in {module_path}"
+                print(error_msg)
+                self.parent.log_message(error_msg)
+        except ModuleNotFoundError as e:
+            error_msg = f"Required module missing: {e}. Install with 'pip install netmiko'"
+            print(error_msg)
+            self.parent.log_message(error_msg)
         except Exception as e:
-            print(f"Import failed: {e}")
+            error_msg = f"Import failed: {e}"
+            print(error_msg)
+            self.parent.log_message(error_msg)
 
         # Reset button styles
         for row in range(self.single_device_table.rowCount()):
@@ -352,8 +369,6 @@ class SingleDevicePage(QFrame):
 
         # Clear IP input field after selection
         self.ip_input.clear()
-
-        self.parent.open_main_page()
 
     def get_script_import_path(self, script_name: str) -> str:
         vendor = self.current_vendor
