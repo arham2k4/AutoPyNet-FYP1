@@ -134,20 +134,25 @@ class LoginDialog(QDialog):
         try:
             # Import main page from the package
             from pages.main_page import AutoPynetDashboard
-            
-            # Close login dialog
-            self.close()
-            
-            # Create and show main window
+            print("Login successful: launching dashboard")
+
+            # Create and show main window first, then close the login dialog
             self.main_window = AutoPynetDashboard()
             self.main_window.show()
-            
-            # Show success message
+
+            # Close login dialog after dashboard is shown
+            self.close()
+
+            # Show success message on dashboard
             QMessageBox.information(self.main_window, "Success", "Login successful!")
             
         except ImportError as e:
+            import traceback
+            traceback.print_exc()
             self.show_error(f"Error loading main page: {str(e)}")
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             self.show_error(f"An error occurred: {str(e)}")
 
 
