@@ -107,8 +107,8 @@ class DeviceTypePage(QFrame):
         box_layout.addLayout(button_container)
         box_frame.setLayout(box_layout)
 
-        # Align the box frame to the top-left corner
-        page_layout.addWidget(box_frame, alignment=Qt.AlignTop | Qt.AlignLeft)
+        # Align the box frame to the center
+        page_layout.addWidget(box_frame, alignment=Qt.AlignCenter)
         page_layout.addStretch()
 
         back_button = QPushButton("Back")

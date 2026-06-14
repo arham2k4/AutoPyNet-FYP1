@@ -100,8 +100,8 @@ class VendorPage(QFrame):
         box_layout.addLayout(button_container)
         box_frame.setLayout(box_layout)
 
-        # Align the box frame to the top-left corner
-        vendor_layout.addWidget(box_frame, alignment=Qt.AlignTop | Qt.AlignLeft)
+        # Align the box frame to the center
+        vendor_layout.addWidget(box_frame, alignment=Qt.AlignCenter)
         vendor_layout.addStretch()
 
         back_button = QPushButton("Back")

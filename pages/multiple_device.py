@@ -1,10 +1,11 @@
 import importlib
 import traceback
 from PyQt5.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QPushButton,
-                             QLabel, QTableWidget, QWidget, QMessageBox,
+                             QLabel, QTableWidget, QTableWidgetItem, QWidget, QMessageBox,
                              QFileDialog, QLineEdit)
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
+import threading
 
 
 class MultipleDevicePage(QFrame):
@@ -169,40 +170,30 @@ class MultipleDevicePage(QFrame):
             self.show_error_message(f"Error reading file: {str(e)}")
             return
 
-        # Update button styles
-        for row in range(self.multiple_device_table.rowCount()):
-            widget = self.multiple_device_table.cellWidget(row, 0)
-            if widget:
-                btn = widget.findChild(QPushButton)
-                if btn:
-                    btn.setStyleSheet("""
-                        QPushButton {
-                            text-align: left;
-                            padding: 10px;
-                            font-size: 12pt;
-                            background-color: #f0f0f0;
-                            border: 1px solid #dcdcdc;
-                            border-radius: 5px;
-                        }
-                        QPushButton:hover {
-                            background-color: #e0e0e0;
-                        }
-                    """)
+        # Disable the command table to avoid repeated clicks and UI churn
+        self._set_buttons_enabled(False)
 
-        button.setStyleSheet("""
-            QPushButton {
-                text-align: left;
-                padding: 10px;
-                font-size: 12pt;
-                background-color: #0056b3;
-                color: white;
-                border: 1px solid #003d7a;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #004494;
-            }
-        """)
+        # If a real QPushButton was passed, provide a visual highlight; otherwise skip
+        if hasattr(button, 'setEnabled'):
+            try:
+                button.setEnabled(False)
+            except Exception:
+                pass
+        if hasattr(button, 'setStyleSheet'):
+            try:
+                button.setStyleSheet("""
+                    QPushButton {
+                        text-align: left;
+                        padding: 10px;
+                        font-size: 12pt;
+                        background-color: #0056b3;
+                        color: white;
+                        border: 1px solid #003d7a;
+                        border-radius: 5px;
+                    }
+                """)
+            except Exception:
+                pass
 
         print("\n--- Selection Path ---")
         print(f"Vendor: {self.current_vendor}")
@@ -218,7 +209,7 @@ class MultipleDevicePage(QFrame):
                 "0002": "show_arp_table",
                 "0003": "show_mac_address_table",
                 "0004": "show_running_config",
-                "0005": "show_vlan_brief"
+                "0005": "show_vlan_brief",
             }
             
             router_mapping = {
@@ -226,43 +217,37 @@ class MultipleDevicePage(QFrame):
                 "1002": "enable_interface",
                 "1003": "enable_ip_routing",
                 "1004": "show_ip_route",
-                "1005": "show_running_config"
+                "1005": "show_running_config",
             }
-            
-            # Choose the correct mapping based on device type
+
             script_mapping = switch_mapping if self.current_device_type == "switch" else router_mapping
-            
             script_filename = script_mapping.get(button.code_id)
             if not script_filename:
                 raise ValueError(f"Invalid code ID: {button.code_id}")
-                
-            script_name = f"Command.Cisco.{self.current_device_type}.{self.current_device_type}_multiple_device.{script_filename}"
-            script_module = importlib.import_module(script_name)
 
-            if hasattr(script_module, "main"):
-                script_module.main()
-                self.parent.log_message(f"Command executed: {button.code_id} - {button.description}")
-            else:
-                msg = f"Script {script_name} does not define a 'main' function."
-                print(msg)
-                self.parent.log_message(msg)
-                self.show_error_message(f"Script {script_name} is invalid!")
+            script_name = f"Command.Cisco.{self.current_device_type}.{self.current_device_type}_multiple_device.{script_filename}"
+
+            # Run import and execution in background to avoid blocking the UI
+            thread = threading.Thread(
+                target=self._run_multiple_script,
+                args=(script_name, device_list, button.code_id, button.description),
+                daemon=True,
+            )
+            thread.start()
 
         except ModuleNotFoundError as e:
             msg = f"Module not found: {e}"
             print(msg)
             self.parent.log_message(msg)
             self.show_error_message(f"Required module missing: {e}")
+            self._set_buttons_enabled(True)
         except Exception as e:
-            msg = f"Error running script {script_name}: {e}"
+            msg = f"Error preparing script {button.code_id}: {e}"
             print(msg)
             traceback.print_exc()
             self.parent.log_message(msg)
-            self.show_error_message(f"Error running script: {str(e)}")
-
-        # Clear file input and path after running the command
-        self.file_path_display.clear()
-        self.selected_file_path = None
+            self.show_error_message(f"Error: {str(e)}")
+            self._set_buttons_enabled(True)
 
     def set_selected_options(self, vendor, device_type):
         self.current_vendor = vendor
@@ -351,35 +336,72 @@ class MultipleDevicePage(QFrame):
         self.populate_command_table(commands)
 
     def populate_command_table(self, commands):
+        # Use lightweight QTableWidgetItem entries instead of embedding QPushButton widgets
+        # to avoid heavy widget creation when the command list is large.
         self.multiple_device_table.clearContents()
         self.multiple_device_table.setRowCount(len(commands))
 
         for row, (code_id, description) in enumerate(commands):
-            button = QPushButton(f"{code_id} - {description}")
-            button.setStyleSheet("""
-                QPushButton {
-                    text-align: left;
-                    padding: 10px;
-                    font-size: 12pt;
-                    background-color: #f0f0f0;
-                    border: 1px solid #dcdcdc;
-                    border-radius: 5px;
-                }
-                QPushButton:hover {
-                    background-color: #e0e0e0;
-                }
-            """)
-            button.code_id = code_id
-            button.description = description
-            button.clicked.connect(lambda checked, b=button: self.handle_button_click(b))
+            item_text = f"{code_id} - {description}"
+            item = QTableWidgetItem(item_text)
+            item.setData(Qt.UserRole, (code_id, description))
+            item.setFont(QFont("Arial", 12))
+            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
-            widget = QWidget()
-            layout = QHBoxLayout(widget)
-            layout.addWidget(button)
-            layout.setContentsMargins(0, 0, 0, 0)
-
-            self.multiple_device_table.setCellWidget(row, 0, widget)
+            self.multiple_device_table.setItem(row, 0, item)
             self.multiple_device_table.setRowHeight(row, 50)
+
+        # Connect click handler to process commands when a row is clicked
+        try:
+            # avoid reconnecting multiple times
+            self.multiple_device_table.cellClicked.disconnect()
+        except Exception:
+            pass
+        self.multiple_device_table.cellClicked.connect(self.handle_table_click)
+
+    def _run_multiple_script(self, script_name, device_list, code_id, description):
+        try:
+            script_module = importlib.import_module(script_name)
+
+            if hasattr(script_module, "main"):
+                try:
+                    # Call main() in module; module is responsible for handling multiple devices
+                    script_module.main()
+                    self.parent.log_message(f"Command executed: {code_id} - {description}")
+                except Exception as exec_err:
+                    err = f"Execution error in {script_name}: {exec_err}"
+                    print(err)
+                    self.parent.log_message(err)
+            else:
+                msg = f"Script {script_name} does not define a 'main' function."
+                print(msg)
+                self.parent.log_message(msg)
+                # Show error on UI thread
+                QTimer.singleShot(0, lambda: self.show_error_message(f"Script {script_name} is invalid!"))
+        except ModuleNotFoundError as e:
+            msg = f"Module not found: {e}"
+            print(msg)
+            self.parent.log_message(msg)
+            QTimer.singleShot(0, lambda: self.show_error_message(f"Required module missing: {e}"))
+        except Exception as e:
+            msg = f"Error running script {script_name}: {e}"
+            print(msg)
+            traceback.print_exc()
+            self.parent.log_message(msg)
+            QTimer.singleShot(0, lambda: self.show_error_message(f"Error running script: {str(e)}"))
+        finally:
+            # Clear file input and path on UI thread and re-enable buttons
+            QTimer.singleShot(0, lambda: self.file_path_display.clear())
+            QTimer.singleShot(0, lambda: setattr(self, 'selected_file_path', None))
+            QTimer.singleShot(0, self._set_buttons_enabled)
+
+    def _set_buttons_enabled(self, enabled=True):
+        # Enable/disable the whole command table to prevent interaction during background runs
+        try:
+            self.multiple_device_table.setEnabled(enabled)
+        except Exception:
+            pass
 
     def show_error_message(self, message):
         error_dialog = QMessageBox()
@@ -388,3 +410,25 @@ class MultipleDevicePage(QFrame):
         error_dialog.setText(message)
         error_dialog.setStandardButtons(QMessageBox.Ok)
         error_dialog.exec_()
+
+    def handle_table_click(self, row, column):
+        """Triggered when a table row is clicked; extract code and description and run."""
+        item = self.multiple_device_table.item(row, 0)
+        if not item:
+            return
+        data = item.data(Qt.UserRole)
+        if not data:
+            return
+        code_id, description = data
+
+        # Create a minimal button-like object to reuse existing flow where helpful
+        class _BtnObj:
+            pass
+
+        btn = _BtnObj()
+        btn.code_id = code_id
+        btn.description = description
+
+        # Delegate to handle_button_click which will start the background thread
+        # and manage UI disabling. We adapt by calling the same logic path.
+        self.handle_button_click(btn)

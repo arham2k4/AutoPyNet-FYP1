@@ -4,6 +4,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import sys
 import os
+import signal
 
 class LoginDialog(QDialog):
     def __init__(self):
@@ -163,8 +164,20 @@ def main():
     # Create and show login dialog
     login_dialog = LoginDialog()
     login_dialog.show()
-    
-    sys.exit(app.exec_())
+    # Ensure Ctrl+C (SIGINT) cleanly quits the QApplication
+    try:
+        signal.signal(signal.SIGINT, lambda *args: app.quit())
+    except Exception:
+        # If signal handling is not supported on this platform, ignore
+        pass
+
+    try:
+        exit_code = app.exec_()
+    except KeyboardInterrupt:
+        print("Interrupted by user (KeyboardInterrupt)")
+        exit_code = 0
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

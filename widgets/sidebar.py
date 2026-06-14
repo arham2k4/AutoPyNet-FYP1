@@ -53,7 +53,6 @@ class Sidebar(QFrame):
             ("Home", self.parent.open_main_page),
             ("Vendor", self.parent.open_choose_vendor_page),
             ("My Files", self.parent.open_my_files_page),
-            ("Status", getattr(self.parent, "open_status_page", lambda: None)),
             ("Logs", self.parent.open_log_window),  # New Logs button
             ("Sign Out", getattr(self.parent, "sign_out", lambda: None))
         ]

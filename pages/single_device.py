@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QPushButton,
                             QLabel, QTableWidget, QTableWidgetItem, QWidget, QLineEdit)
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 import importlib
 import socket
+import threading
 
 class SingleDevicePage(QFrame):
     def __init__(self, parent):
@@ -12,6 +13,9 @@ class SingleDevicePage(QFrame):
         self.current_vendor = None
         self.current_device_type = "switch"
         self.command_buttons = []
+        self.ip_validation_timer = QTimer()
+        self.ip_validation_timer.setSingleShot(True)
+        self.ip_validation_timer.timeout.connect(self.check_ip_and_toggle_buttons)
         self.init_ui()
 
     def set_selected_options(self, vendor, device_type):
@@ -85,7 +89,8 @@ class SingleDevicePage(QFrame):
             }
         """)
 
-        self.ip_input.textChanged.connect(self.check_ip_and_toggle_buttons)
+        # Debounce IP validation to avoid UI lag while typing
+        self.ip_input.textChanged.connect(self.schedule_check_ip)
 
         ip_input_layout.addWidget(ip_label)
         ip_input_layout.addWidget(self.ip_input)
@@ -266,20 +271,14 @@ class SingleDevicePage(QFrame):
 
         for button in self.command_buttons:
             button.setEnabled(ip_valid)
-            if not ip_valid:
-                button.setStyleSheet("""
-                    QPushButton {
-                        text-align: left;
-                        padding: 10px;
-                        font-size: 12pt;
-                        background-color: #f0f0f0;
-                        border: 1px solid #dcdcdc;
-                        border-radius: 5px;
-                    }
-                    QPushButton:hover {
-                        background-color: #e0e0e0;
-                    }
-                """)
+
+        # Rely on QPushButton disabled state styling (avoid heavy stylesheet resets)
+        # If additional visual cues are needed, prefer using stylesheet with :disabled selector
+
+    def schedule_check_ip(self):
+        """Start or restart the short timer used to debounce IP validation."""
+        # restart timer (300ms) so validation runs only after typing pauses
+        self.ip_validation_timer.start(300)
 
     def is_valid_ip(self, ip):
         try:
@@ -305,27 +304,22 @@ class SingleDevicePage(QFrame):
         print(log_text)
         self.parent.log_message(log_text)
 
+        # Prevent repeated clicks: disable buttons while command runs
+        for btn in self.command_buttons:
+            btn.setEnabled(False)
+
         try:
             folder = f"{device_type.lower()}_single_device"
             module_path = f"Command.{vendor}.{device_type}.{folder}.{button.description}"
             log_import = f"Trying to import: {module_path}"
             print(log_import)
             self.parent.log_message(log_import)
-            script_module = importlib.import_module(module_path)
 
-            if hasattr(script_module, "main"):
-                script_module.main()
-                success_msg = f"Command executed: {button.code_id} - {button.description}"
-                print(success_msg)
-                self.parent.log_message(success_msg)
-            else:
-                error_msg = f"'main' not found in {module_path}"
-                print(error_msg)
-                self.parent.log_message(error_msg)
-        except ModuleNotFoundError as e:
-            error_msg = f"Required module missing: {e}. Install with 'pip install netmiko'"
-            print(error_msg)
-            self.parent.log_message(error_msg)
+            # Run the script in a background thread to avoid blocking the UI
+            thread = threading.Thread(target=self._run_script_thread,
+                                      args=(module_path, button.code_id, button.description),
+                                      daemon=True)
+            thread.start()
         except Exception as e:
             error_msg = f"Import failed: {e}"
             print(error_msg)
@@ -369,6 +363,46 @@ class SingleDevicePage(QFrame):
 
         # Clear IP input field after selection
         self.ip_input.clear()
+
+    def _run_script_thread(self, module_path, code_id, description):
+        """Background worker: import module and execute its main()."""
+        try:
+            script_module = importlib.import_module(module_path)
+
+            if hasattr(script_module, "main"):
+                try:
+                    script_module.main()
+                    success_msg = f"Command executed: {code_id} - {description}"
+                    print(success_msg)
+                    self.parent.log_message(success_msg)
+                except Exception as exec_err:
+                    err = f"Execution error in {module_path}: {exec_err}"
+                    print(err)
+                    self.parent.log_message(err)
+            else:
+                error_msg = f"'main' not found in {module_path}"
+                print(error_msg)
+                self.parent.log_message(error_msg)
+        except ModuleNotFoundError as e:
+            error_msg = f"Required module missing: {e}. Install with 'pip install netmiko'"
+            print(error_msg)
+            self.parent.log_message(error_msg)
+        except Exception as e:
+            error_msg = f"Import failed: {e}"
+            print(error_msg)
+            self.parent.log_message(error_msg)
+        finally:
+            # Re-enable buttons on the main thread
+            try:
+                QTimer.singleShot(0, self.enable_buttons)
+            except Exception:
+                # Fallback: enable directly (may be called from main thread)
+                self.enable_buttons()
+
+    def enable_buttons(self):
+        ip_valid = self.is_valid_ip(self.ip_input.text().strip())
+        for btn in self.command_buttons:
+            btn.setEnabled(ip_valid)
 
     def get_script_import_path(self, script_name: str) -> str:
         vendor = self.current_vendor

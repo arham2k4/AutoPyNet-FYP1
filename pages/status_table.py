@@ -1,44 +1,74 @@
-# # pages/status_table.py
-# from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
-# from PyQt5.QtGui import QFont
-# from PyQt5.QtCore import Qt
+﻿from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
 
-# class StatusTable(QTableWidget):
-#     def __init__(self):
-#         super().__init__(5, 2)
-#         self.setup_ui()
+class StatusTable(QTableWidget):
+    def __init__(self):
+        super().__init__(0, 4)
+        self.setup_ui()
 
-#     def setup_ui(self):
-#         self.setColumnWidth(0, 1100)
-#         self.setColumnWidth(1, 400)
-#         self.verticalHeader().setVisible(False)
-#         self.horizontalHeader().setStretchLastSection(True)
+    def setup_ui(self):
+        self.setHorizontalHeaderLabels([
+            "Device Name",
+            "IP Address",
+            "Type",
+            "Status"
+        ])
+        self.verticalHeader().setVisible(False)
+        self.setSelectionBehavior(QTableWidget.SelectRows)
+        self.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.horizontalHeader().setStretchLastSection(True)
 
-#         devices = ["List of Devices", "Switch 1", "Router", "Router 2"]
-#         statuses = ["Status", "🔴", "🟢", "🟠"]
+        self.setStyleSheet("""
+            QTableWidget {
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 10px;
+                padding: 8px;
+                font-family: Arial;
+            }
+            QHeaderView::section {
+                background-color: #007bff;
+                color: white;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QTableWidget::item {
+                padding: 8px;
+            }
+        """)
 
-#         for row, (device, status) in enumerate(zip(devices, statuses)):
-#             device_item = QTableWidgetItem(device)
-#             status_item = QTableWidgetItem(status)
+        self.setColumnWidth(0, 220)
+        self.setColumnWidth(1, 180)
+        self.setColumnWidth(2, 140)
+        self.setColumnWidth(3, 120)
 
-#             device_item.setFont(QFont("Arial", 12, QFont.Bold))
-#             status_item.setFont(QFont("Arial", 12, QFont.Bold))
-            
-#             device_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
-#             status_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        sample_devices = [
+            {"name": "Switch 1", "ip": "192.168.1.10", "type": "Switch", "status": "Online"},
+            {"name": "Router 1", "ip": "192.168.1.20", "type": "Router", "status": "Online"},
+            {"name": "Access Point", "ip": "192.168.1.30", "type": "Access Point", "status": "Offline"},
+            {"name": "Firewall", "ip": "192.168.1.40", "type": "Firewall", "status": "Online"},
+        ]
+        self.update_table(sample_devices)
 
-#             self.setItem(row, 0, device_item)
-#             self.setItem(row, 1, status_item)
+    def update_table(self, devices):
+        self.setRowCount(len(devices))
+        for row, device in enumerate(devices):
+            name_item = QTableWidgetItem(device["name"])
+            ip_item = QTableWidgetItem(device["ip"])
+            type_item = QTableWidgetItem(device["type"])
+            status_item = QTableWidgetItem(device["status"])
 
-#         self.setStyleSheet("""
-#         QTableWidget {
-#             background-color: #f5f5f5;
-#             border: 1px solid #dcdcdc;
-#             border-radius: 10px;
-#             padding: 5px;
-#             font-family: 'Arial';
-#             font-size: 12pt;
-#         }
-#         """)
+            for item in [name_item, ip_item, type_item, status_item]:
+                item.setFont(QFont("Arial", 11))
+                item.setTextAlignment(Qt.AlignCenter)
 
-#         self.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            if device["status"] == "Online":
+                status_item.setForeground(Qt.darkGreen)
+            else:
+                status_item.setForeground(Qt.red)
+
+            self.setItem(row, 0, name_item)
+            self.setItem(row, 1, ip_item)
+            self.setItem(row, 2, type_item)
+            self.setItem(row, 3, status_item)

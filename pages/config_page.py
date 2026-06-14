@@ -33,7 +33,7 @@ class ConfigPage(QFrame):
 
         center_text = QLabel("Select Device Configuration")
         center_text.setFont(QFont("Arial", 24, QFont.Bold))
-        center_text.setAlignment(Qt.AlignLeft)
+        center_text.setAlignment(Qt.AlignCenter)
         center_text.setStyleSheet("""
             font-size: 24pt;
             font-weight: bold;
@@ -45,7 +45,7 @@ class ConfigPage(QFrame):
 
         button_container = QHBoxLayout()
         button_container.setSpacing(30)
-        button_container.setAlignment(Qt.AlignLeft)
+        button_container.setAlignment(Qt.AlignCenter)
 
         single_device_button = QPushButton("Single Device")
         single_device_button.setFixedSize(250, 150)
@@ -103,8 +103,8 @@ class ConfigPage(QFrame):
         box_layout.addLayout(button_container)
         box_frame.setLayout(box_layout)
 
-        # ✅ Align box to vertical center and horizontal left
-        page_layout.addWidget(box_frame, alignment=Qt.AlignVCenter | Qt.AlignLeft)
+        # Align box to center
+        page_layout.addWidget(box_frame, alignment=Qt.AlignCenter)
 
         # Back button at bottom
         back_button = QPushButton("Back")

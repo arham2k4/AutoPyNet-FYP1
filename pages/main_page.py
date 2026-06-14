@@ -7,7 +7,6 @@ from PyQt5.QtCore import Qt, QSize
 from widgets.sidebar import Sidebar
 from widgets.search_bar import SearchBar
 from pages.welcome_section import WelcomeSection
-from pages.device_status_page import DeviceStatusPage
 from pages.files_page import FilesPage
 from pages.log_window import LogWindow  # Import the LogWindow class
 
@@ -47,7 +46,6 @@ class AutoPynetDashboard(QWidget):
         self.device_selection_page = ConfigPage(self)
         self.single_device_page = SingleDevicePage(self)
         self.multiple_device_page = MultipleDevicePage(self)
-        self.device_status_page = DeviceStatusPage(self)
         self.files_page = FilesPage(self)
 
         # Add all pages to stacked widget
@@ -57,7 +55,6 @@ class AutoPynetDashboard(QWidget):
         self.pages.addWidget(self.device_selection_page)
         self.pages.addWidget(self.single_device_page)
         self.pages.addWidget(self.multiple_device_page)
-        self.pages.addWidget(self.device_status_page)
         self.pages.addWidget(self.files_page)
 
         main_layout.addWidget(self.pages)
@@ -103,10 +100,6 @@ class AutoPynetDashboard(QWidget):
     def open_my_files_page(self):
         """Switch to the My Files page."""
         self.pages.setCurrentWidget(self.files_page)
-
-    def open_status_page(self):
-        """Switch to the Status page."""
-        self.pages.setCurrentWidget(self.device_status_page)
 
     def open_device_type_page(self):
         """Navigate to the device type page."""
@@ -202,10 +195,9 @@ class AutoPynetDashboard(QWidget):
         wrapper_frame = QFrame()
         wrapper_frame.setStyleSheet("""
             QFrame {
-                background-color:rgb(255, 255, 255);
+                background-color: rgb(255, 255, 255);
                 border-radius: 10px;
                 padding: 20px;
-
             }
         """)
 
