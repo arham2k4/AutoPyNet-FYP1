@@ -144,14 +144,6 @@ python main.py
 - **SDG 16:** Peace, Justice and Strong Institutions
 - **SDG 17:** Partnerships for the Goals
 
-## Team
-
-| Name | Reg. No. |
-| --- | --- |
-| Muhammad Arham | IU02-0322-0245 |
-| Shehbaz Ahsan Hashmi | IU02-0322-0410 |
-| Muhammad Shayan Chhapra | IU02-0122-0459 |
-| Manahil Shakeel | IU02-0320-0309 |
 
 **Supervisor:** Muhammad Hilal
 
