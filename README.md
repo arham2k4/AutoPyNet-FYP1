@@ -3,7 +3,7 @@
 > **Automate. Simplify. Thrive.**
 > A Python-based network automation tool for securely pushing configuration updates and software/firmware upgrades to Cisco routers, switches, and firewalls, using Zero Touch Provisioning (ZTP), SSH, and Multi-Factor Authentication (MFA).
 
-**Final Year Project (FYP-1)** · Department of Computer Science · Batch Fall 2026
+**Final Year Project (FYP)** · Department of Computer Science · Batch Fall 2026
 
 ---
 
