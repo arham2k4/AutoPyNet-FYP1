@@ -75,8 +75,8 @@ The system is first built and tested in a controlled **LAN / Head Office (HO)** 
 ## Installation
 
 ```bash
-git clone https://github.com/arham2k4/AutoPyNet-FYP1.git
-cd AutoPyNet-FYP1
+git clone https://github.com/arham2k4/AutoPyNet-FYP.git
+cd AutoPyNet-FYP
 
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
@@ -118,16 +118,6 @@ python main.py
 | Implementation | SSH module, ZTP integration, MFA, update-pushing logic |
 | Testing & validation | Unit/integration tests, security tests (MFA + SSH), multi-branch simulation |
 | Deployment & optimization | LAN/HO deployment, multi-branch extension |
-
-## Current Status (FYP-1)
-
-- [x] Proposal approved and requirements defined
-- [ ] System design
-- [ ] SSH module (Paramiko / Netmiko)
-- [ ] ZTP integration
-- [ ] MFA authentication
-- [ ] Update-pushing logic
-- [ ] Testing and multi-branch simulation (FYP-2)
 
 ## Future Work
 
